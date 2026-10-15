@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeatGuard Simulator — Clean Minimal Design</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',      /* Slate 900 */
+                            card: '#ffffff',
+                            bg: '#f8fafc',        /* Slate 50 */
+                            border: '#e2e8f0',    /* Slate 200 */
+                            accent: '#2563eb',    /* Vibrant Blue Accent */
+                            emerald: '#059669',   /* Safe Green */
+                            amber: '#d97706',     /* Moderate Amber */
+                            red: '#dc2626'        /* High Risk Red */
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-brand-bg text-slate-800 font-sans min-h-screen selection:bg-slate-800 selection:text-white antialiased">
+
+    <!-- TOP HEADER / NAV BAR -->
+    <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-50 transition-all shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+                <div class="bg-white/10 p-2.5 rounded-xl border border-white/10 backdrop-blur-sm">
+                    <i class="fa-solid fa-earth-asia text-emerald-400 text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg sm:text-xl text-white tracking-tight flex items-center gap-2">
+                        <span>PeatGuard</span>
+                        <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">v2.5 Live</span>
+                    </h1>
+                    <p class="text-xs text-slate-400 hidden sm:block" data-i18n="subtitle">Simulasi Risiko Kebakaran & Perencanaan Mitigasi Lahan Gambut Indonesia</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <!-- Language Toggle Button -->
+                <button type="button" onclick="toggleLanguage()" class="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-globe text-sky-400"></i>
+                    <span id="langLabel" class="font-bold">EN / ID</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- BANNER & DETAILED OVERVIEW SLIDER -->
+        <div class="relative overflow-hidden bg-white border border-brand-border rounded-2xl p-5 sm:p-7 shadow-sm">
+            <div class="flex flex-col items-center text-center justify-between gap-4 relative z-10">
+                <div class="space-y-1.5 max-w-3xl">
+                    <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center justify-center gap-2" data-i18n="bannerTitle">
+                        Simulasi Interaktif & Perencanaan Intervensi Lahan Gambut
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-600 leading-relaxed text-justify" data-i18n="bannerDesc">
+                        Uji pengaruh kedalaman muka air tanah dan defisit hujan terhadap kelembapan gambut otomatis, estimasi kedalaman api bawah tanah, serta radius sebaran asap (*haze dispersion*).
+                    </p>
+                </div>
+            </div>
+
+            <!-- DETAILED OVERVIEW CAROUSEL SLIDER -->
+            <div class="mt-6 pt-5 border-t border-slate-100">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info text-amber-500"></i>
+                        <span data-i18n="overviewHeader">Panduan Detail & Overview Simulator</span>
+                    </div>
+                    <!-- Slide Navigation Controls -->
+                    <div class="flex items-center gap-2">
+                        <span id="overviewSlideIndicator" class="text-xs sm:text-sm text-slate-600 font-mono font-bold">1 / 2</span>
+                        <div class="flex gap-1.5">
+                            <button type="button" onclick="prevOverviewSlide()" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs border border-slate-200 transition">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button type="button" onclick="nextOverviewSlide()" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs border border-slate-200 transition">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Carousel Container with Strict Block Clipping -->
+                <div class="relative w-full rounded-xl bg-slate-50 border border-slate-200 p-4 sm:p-5 shadow-inner" style="overflow: hidden !important;">
+                    <div class="w-full relative">
+                        
+                        <!-- Slide 1: Detailed Inputs -->
+                        <div id="overviewSlide0" class="w-full space-y-2 text-justify" style="display: block;">
+                            <h4 class="text-xs font-extrabold text-slate-900 uppercase tracking-wide flex items-center justify-center gap-2 text-center">
+                                <i class="fa-solid fa-sliders text-amber-600"></i>
+                                <span data-i18n="slide1Title">Tuas Kontrol / Variabel Input (Parameter Awal)</span>
+                            </h4>
+                            <p class="text-xs text-slate-700 leading-relaxed text-justify" id="overviewInputText">
+                                Simulator ini digerakkan oleh 4 tuas utama: <strong>Muka Air Tanah (WTD)</strong> untuk mengontrol tinggi air dari permukaan gambut, <strong>Defisit Hujan (Hari Tanpa Hujan)</strong> untuk mensimulasikan kekeringan musim kemarau/El Niño, <strong>Kondisi Saluran Drainase</strong> (Alami vs Kanal Terbuka), serta <strong>Luas Area Terbakar</strong> dan arah angin.
+                            </p>
+                        </div>
+
+                        <!-- Slide 2: Detailed Outputs -->
+                        <div id="overviewSlide1" class="w-full space-y-2 text-justify" style="display: none;">
+                            <h4 class="text-xs font-extrabold text-slate-900 uppercase tracking-wide flex items-center justify-center gap-2 text-center">
+                                <i class="fa-solid fa-chart-line text-sky-600"></i>
+                                <span data-i18n="slide2Title">Luaran & Indikator Output (Hasil Kalkulasi Otomatis)</span>
+                            </h4>
+                            <p class="text-xs text-slate-700 leading-relaxed text-justify" id="overviewOutputText">
+                                Berdasarkan variabel input Anda, sistem secara otomatis mengalkulasi <strong>Kelembapan Gambut (%)</strong>, <strong>Kedalaman Bakar Bawah Tanah (cm)</strong>, <strong>Indeks Risiko Kebakaran (0-100)</strong>, <strong>Visualisasi Vektor Sebaran Asap (*Plume*)</strong> di kanvas, serta perkiraan logistik air dan panduan mitigasi kesehatan spesifik.
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN DASHBOARD GRID -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- LEFT COLUMN: INPUT LEVERS & READOUTS (5 COLS) -->
+            <div class="lg:col-span-5 space-y-6">
+
+                <!-- Input Levers Card -->
+                <div class="bg-white border border-brand-border rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-amber-600"></i>
+                            <span data-i18n="inputCardTitle">Tuas Kontrol Lingkungan & Kebakaran</span>
+                        </h3>
+                        <span class="text-[10px] sm:text-xs bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-0.5 rounded-full font-mono font-semibold" data-i18n="freeVarsBadge">Variabel Bebas</span>
+                    </div>
+
+                    <!-- Inputs Form Controls -->
+                    <div class="space-y-4">
+                        <!-- WTD Slider -->
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between items-center text-xs sm:text-sm">
+                                <label for="wtdInput" class="font-semibold text-slate-700" data-i18n="labelWtd">Kedalaman Muka Air Tanah (WTD)</label>
+                                <span class="font-mono font-bold text-amber-600 text-sm" id="wtdValDisplay">-40 cm</span>
+                            </div>
+                            <input type="range" id="wtdInput" min="-120" max="10" value="-40" step="1" oninput="updateSimulation()" class="w-full accent-slate-800 bg-slate-200 h-2.5 rounded-lg cursor-pointer">
+                            <div class="flex justify-between text-[10px] sm:text-xs text-slate-500 font-mono">
+                                <span data-i18n="scaleWtdMin">-120 cm (Sangat Kering)</span>
+                                <span data-i18n="scaleWtdMax">0 cm (Basah/Banjir)</span>
+                            </div>
+                        </div>
+
+                        <!-- Dry Days Slider -->
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between items-center text-xs sm:text-sm">
+                                <label for="dryDaysInput" class="font-semibold text-slate-700" data-i18n="labelDryDays">Defisit Hujan / Tanpa Hujan</label>
+                                <span class="font-mono font-bold text-amber-600 text-sm" id="dryDaysValDisplay">20 <span id="dryDaysUnitLabel">Hari</span></span>
+                            </div>
+                            <input type="range" id="dryDaysInput" min="0" max="90" value="20" step="1" oninput="updateSimulation()" class="w-full accent-amber-600 bg-slate-200 h-2.5 rounded-lg cursor-pointer">
+                            <div class="flex justify-between text-[10px] sm:text-xs text-slate-500 font-mono">
+                                <span data-i18n="scaleDryMin">0 Hari (Hujan Harian)</span>
+                                <span data-i18n="scaleDryMax">90 Hari (El Niño Ekstrem)</span>
+                            </div>
+                        </div>
+
+                        <!-- Degradation Select -->
+                        <div class="space-y-1.5">
+                            <label for="degradationSelect" class="block text-xs sm:text-sm font-semibold text-slate-700" data-i18n="labelDegradation">Kondisi Lahan & Saluran Drainase</label>
+                            <select id="degradationSelect" onchange="updateSimulation()" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs sm:text-sm rounded-xl p-3 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 outline-none font-medium">
+                                <option value="pristine" id="optPristine">Gambut Alami / Minim Kanal (Pristine)</option>
+                                <option value="moderate" selected id="optModerate">Terdegradasi Sedang (Kanal Sekunder)</option>
+                                <option value="degraded" id="optDegraded">Sangat Terdegradasi (Kanal Dalam & Terbuka)</option>
+                            </select>
+                        </div>
+
+                        <!-- Incident Area Slider -->
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between items-center text-xs sm:text-sm">
+                                <label for="areaInput" class="font-semibold text-slate-700" data-i18n="labelArea">Luas Lahan Terbakar (Hektare)</label>
+                                <span class="font-mono font-bold text-red-600 text-sm" id="areaValDisplay">150 ha</span>
+                            </div>
+                            <input type="range" id="areaInput" min="10" max="5000" value="150" step="10" oninput="updateSimulation()" class="w-full accent-red-600 bg-slate-200 h-2.5 rounded-lg cursor-pointer">
+                            <div class="flex justify-between text-[10px] sm:text-xs text-slate-500 font-mono">
+                                <span id="scaleSmallArea" data-i18n="scaleSmallArea">10 ha (Skala Kecil)</span>
+                                <span id="scaleLargeArea" data-i18n="scaleLargeArea">5.000 ha (Bencana Luas)</span>
+                            </div>
+                        </div>
+
+                        <!-- Wind Control Grid -->
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <div>
+                                <label for="windDirSelect" class="block text-xs font-semibold text-slate-700 mb-1" data-i18n="labelWindDir">Arah Angin Utama</label>
+                                <select id="windDirSelect" onchange="updateSimulation()" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs sm:text-sm rounded-xl p-2.5 outline-none font-medium">
+                                    <option value="BARAT" id="optWindWest">Ke Barat</option>
+                                    <option value="BARAT_DAYA" selected id="optWindSW">Ke Barat Daya</option>
+                                    <option value="UTARA" id="optWindNorth">Ke Utara</option>
+                                    <option value="TIMUR" id="optWindEast">Ke Timur</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="windSpeedSelect" class="block text-xs font-semibold text-slate-700 mb-1" data-i18n="labelWindSpeed">Kecepatan Angin</label>
+                                <select id="windSpeedSelect" onchange="updateSimulation()" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs sm:text-sm rounded-xl p-2.5 outline-none font-medium">
+                                    <option value="10" id="optSpeedSlow">Pelan (10 km/jam)</option>
+                                    <option value="18" selected id="optSpeedModerate">Sedang (18 km/jam)</option>
+                                    <option value="30" id="optSpeedFast">Kencang (30 km/jam)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Computed Indicators Readout Card -->
+                <div class="bg-white border border-brand-border rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-calculator text-sky-600"></i>
+                            <span data-i18n="readoutCardTitle">Indikator Terkalkulasi Otomatis</span>
+                        </h3>
+                        <span class="text-[10px] sm:text-xs bg-sky-50 text-sky-800 border border-sky-200 px-2.5 py-0.5 rounded-full font-mono font-semibold" data-i18n="depVarsBadge">Variabel Terikat</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <!-- Peat Moisture (Auto Calculated) -->
+                        <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-1 shadow-sm">
+                            <span class="text-xs text-slate-500 block font-medium" data-i18n="readoutMoistureTitle">Kelembapan Gambut</span>
+                            <div class="text-xl sm:text-2xl font-extrabold text-sky-700 font-mono" id="moistureDisplay">52.4%</div>
+                            <span class="text-[10px] sm:text-xs text-slate-600 block font-medium" id="moistureStatusText">Lembap Cukup</span>
+                        </div>
+
+                        <!-- Estimated Smoldering Depth -->
+                        <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-1 shadow-sm">
+                            <span class="text-xs text-slate-500 block font-medium" data-i18n="readoutBurnDepthTitle">Kedalaman Api Bawah Tanah</span>
+                            <div class="text-xl sm:text-2xl font-extrabold text-amber-700 font-mono" id="burnDepthDisplay">18 cm</div>
+                            <span class="text-[10px] sm:text-xs text-slate-500 block" data-i18n="subsurfaceLayerLabel">Lapisan Gambut Kering</span>
+                        </div>
+                    </div>
+
+                    <!-- Calculated Risk Index Score -->
+                    <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-2 shadow-sm">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs sm:text-sm font-semibold text-slate-700" data-i18n="readoutRiskScoreTitle">Indeks Risiko Kebakaran Gambut</span>
+                            <span id="riskBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-300">TINGGI</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                            <div id="riskBar" class="bg-gradient-to-r from-emerald-600 via-amber-500 to-red-600 h-full w-[68%] transition-all duration-300"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] sm:text-xs text-slate-500 font-mono">
+                            <span id="scaleSafeRisk" data-i18n="scaleSafeRisk">0 (Sangat Aman)</span>
+                            <span id="scaleEmergencyRisk" data-i18n="scaleEmergencyRisk">100 (Bencana Darurat)</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: VECTOR VISUALIZER & PLANNER (7 COLS) -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- Vector Map & Visualizer Card -->
+                <div class="bg-white border border-brand-border rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-compass-drafting text-amber-600"></i>
+                            <span data-i18n="visualizerTitle">Visualisasi Vektor Geometris Sektor Asap & Profil Gambut</span>
+                        </h3>
+                        <span class="text-[10px] sm:text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg font-mono font-medium">Live 2D Canvas</span>
+                    </div>
+
+                    <!-- Canvas Element -->
+                    <div class="relative w-full aspect-[16/9] bg-slate-900 rounded-xl overflow-hidden border border-slate-800 shadow-inner">
+                        <canvas id="simulationCanvas" class="w-full h-full block"></canvas>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="flex items-center justify-between flex-wrap gap-3 text-xs text-slate-600 px-1 pt-1 font-medium">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-red-500 inline-block border border-red-300 shadow-sm"></span>
+                            <span data-i18n="legendFire">Titik Api Utama</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-amber-400 inline-block border border-amber-300 shadow-sm"></span>
+                            <span id="aqiStatusLabel" data-i18n="legendHaze">High Health Risk Zone</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-sky-400 inline-block shadow-sm"></span>
+                            <span data-i18n="legendWtd">Muka Air Tanah (WTD)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prevention & Response Planner Slider Card -->
+                <div class="bg-white border border-brand-border rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-clipboard-list text-emerald-600"></i>
+                            <span data-i18n="plannerCardTitle">Perencanaan Respon & Panduan Mitigasi Spesifik</span>
+                        </h3>
+                        
+                        <!-- Recommendation Carousel Controls -->
+                        <div class="flex items-center gap-2">
+                            <span id="recomSlideIndicator" class="text-xs sm:text-sm text-slate-600 font-mono font-bold">1 / 4</span>
+                            <div class="flex gap-1.5">
+                                <button type="button" onclick="prevRecomSlide()" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs border border-slate-200 transition">
+                                    <i class="fa-solid fa-chevron-left"></i>
+                                </button>
+                                <button type="button" onclick="nextRecomSlide()" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs border border-slate-200 transition">
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calculated Operational Requirements Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl shadow-sm">
+                            <span class="text-[10px] sm:text-xs text-slate-500 block font-medium" data-i18n="waterReqLabel">Kebutuhan Air Pemadaman (m³)</span>
+                            <div class="text-base sm:text-lg font-extrabold text-sky-700 font-mono mt-1" id="waterReqDisplay">12.500 m³</div>
+                        </div>
+
+                        <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl shadow-sm">
+                            <span class="text-[10px] sm:text-xs text-slate-500 block font-medium" data-i18n="heavyEquipLabel">Ekskavator / Sekat Kanal</span>
+                            <div class="text-base sm:text-lg font-extrabold text-amber-700 font-mono mt-1" id="excavatorDisplay">6 <span id="unitText">Unit</span></div>
+                        </div>
+
+                        <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl shadow-sm">
+                            <span class="text-[10px] sm:text-xs text-slate-500 block font-medium" data-i18n="hazeRadiusLabel">Radius Dampak Kesehatan</span>
+                            <div class="text-base sm:text-lg font-extrabold text-red-600 font-mono mt-1" id="hazeRadiusDisplay">28 km</div>
+                        </div>
+
+                        <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl shadow-sm">
+                            <span class="text-[10px] sm:text-xs text-slate-500 block font-medium" data-i18n="carbonEmissionsLabel">Estimasi Emisi Karbon</span>
+                            <div class="text-base sm:text-lg font-extrabold text-slate-900 font-mono mt-1" id="emissionsDisplay">4.200 tCO₂e</div>
+                        </div>
+                    </div>
+
+                    <!-- Recommendation Container with Strict Block Containment -->
+                    <div class="relative w-full rounded-xl bg-slate-50 border border-slate-200 p-4 sm:p-5 shadow-inner" style="overflow: hidden !important;">
+                        <div class="w-full relative">
+                            
+                            <!-- Slide 1: Field Response -->
+                            <div id="recomSlide0" class="w-full space-y-2" style="display: block;">
+                                <h4 class="text-xs font-extrabold text-emerald-800 uppercase tracking-wide flex items-center justify-center gap-2 text-center">
+                                    <i class="fa-solid fa-truck-droplet text-emerald-600"></i>
+                                    <span data-i18n="slideRec1Title">Rekomendasi Taktis Pemadaman & Penutupan Kanal</span>
+                                </h4>
+                                <ul class="text-xs text-slate-700 space-y-1.5 list-disc list-inside leading-relaxed font-medium text-justify" id="slideRec1TrackList">
+                                    <li>Lakukan pembasahan total (rewetting) menggunakan pompa air tekanan tinggi hingga meresap ke kedalaman gambut.</li>
+                                    <li>Bangun sekat kanal darurat (canal blocking) untuk menaikkan kembali tinggi muka air tanah kawasan.</li>
+                                    <li>Gunakan ekskavator untuk isolasi parit api (firebreak trenching) guna mencegah penyebaran api bawah tanah.</li>
+                                </ul>
+                            </div>
+
+                            <!-- Slide 2: Infants & Toddlers -->
+                            <div id="recomSlide1" class="w-full space-y-2" style="display: none;">
+                                <h4 class="text-xs font-extrabold text-amber-800 uppercase tracking-wide flex items-center justify-center gap-2 text-center">
+                                    <i class="fa-solid fa-baby text-amber-600"></i>
+                                    <span data-i18n="slideRec2Title">Mitigasi Kesehatan: Bayi & Balita (0–5 Tahun) & Rumah Tanpa Alat</span>
+                                </h4>
+                                <ul class="text-xs text-slate-700 space-y-1.5 list-disc list-inside leading-relaxed font-medium text-justify" id="slideRec2TrackList">
+                                    <li><strong>Dilarang Memakai Masker N95</strong> pada bayi/balita di bawah 2 tahun karena risiko sesak napas/asfiksia.</li>
+                                    <li>EVAKUASI ke Clean Air Room (Ruang Singgah Ber-AC) dengan filter HEPA atau Posko Kesehatan terdekat.</li>
+                                    <li><strong>Tanpa Air Purifier?</strong> Gantung handuk/kain tebal basah di celah ventilasi/pintu untuk menyaring partikulat debu. Manfaatkan skema peminjaman tabung oksigen/oximeter darurat dari Posko Desa.</li>
+                                </ul>
+                            </div>
+
+                            <!-- Slide 3: Children & Teens -->
+                            <div id="recomSlide2" class="w-full space-y-2" style="display: none;">
+                                <h4 class="text-xs font-extrabold text-sky-800 uppercase tracking-wide flex items-center justify-center gap-2 text-center">
+                                    <i class="fa-solid fa-child text-sky-600"></i>
+                                    <span data-i18n="slideRec3Title">Mitigasi Kesehatan: Anak-Anak & Remaja (<18 Tahun)</span>
+                                </h4>
+                                <ul class="text-xs text-slate-700 space-y-1.5 list-disc list-inside leading-relaxed font-medium text-justify" id="slideRec3TrackList">
+                                    <li>Hentikan seluruh aktivitas olahraga dan kegiatan di luar ruangan sekolah secara total.</li>
+                                    <li>Peralihan ke Pembelajaran Jarak Jauh (PJJ / Sekolah Diliburkan) jika indeks AQI masuk kategori Sangat Tidak Sehat.</li>
+                                    <li>Gunakan masker respirator ukuran anak (kids-sized fit) KN95/N95 saat harus beraktivitas di luar rumah.</li>
+                                </ul>
+                            </div>
+
+                            <!-- Slide 4: Adults & Elderly -->
+                            <div id="recomSlide3" class="w-full space-y-2" style="display: none;">
+                                <h4 class="text-xs font-extrabold text-slate-900 uppercase tracking-wide flex items-center justify-center gap-2 text-center">
+                                    <i class="fa-solid fa-user-shield text-slate-800"></i>
+                                    <span data-i18n="slideRec4Title">Mitigasi Kesehatan: Dewasa, Lansia & Ibu Hamil</span>
+                                </h4>
+                                <ul class="text-xs text-slate-700 space-y-1.5 list-disc list-inside leading-relaxed font-medium text-justify" id="slideRec4TrackList">
+                                    <li>Pekerja lapangan dan tim pemadam wajib menggunakan Masker Respirator N95/KN95 atau Elastomeric.</li>
+                                    <li>Lansia & penderita riwayat asma/ISPA diprioritaskan mendapat bantuan oksigen di Posko Oksigen Mandiri RT/RW.</li>
+                                    <li>Pantau saturasi oksigen (pulse oximeter) berkala dan persiapkan fasilitas rujukan cepat ke Puskesmas.</li>
+                                </ul>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-brand-border py-6 mt-12 text-center text-xs text-slate-500 shadow-inner">
+        <div class="max-w-7xl mx-auto px-4 space-y-2 text-center">
+            <p class="text-center text-justify max-w-3xl mx-auto" data-i18n="footerText">PeatGuard Simulator v2.5 — Model Edukasi Transparan Risiko & Penanganan Kebakaran Gambut Indonesia</p>
+            <p class="text-[10px] text-slate-400 font-mono text-center">Simulasi didasarkan pada model kuantitatif empiris terintegrasi WTD, Defisit Hujan & Haze Dispersion.</p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC ENGINE -->
+    <script>
+        // Language State & Dictionary
+        let currentLang = 'id';
+        const dict = {
+            id: {
+                subtitle: "Simulasi Risiko Kebakaran & Perencanaan Mitigasi Lahan Gambut Indonesia",
+                bannerTitle: "Simulasi Interaktif & Perencanaan Intervensi Lahan Gambut",
+                bannerDesc: "Uji pengaruh kedalaman muka air tanah dan defisit hujan terhadap kelembapan gambut otomatis, estimasi kedalaman api bawah tanah, serta radius sebaran asap (*haze dispersion*).",
+                overviewHeader: "Panduan Detail & Overview Simulator",
+                slide1Title: "Tuas Kontrol / Variabel Input (Parameter Awal)",
+                overviewInputText: "Simulator ini digerakkan oleh 4 tuas utama: <strong>Muka Air Tanah (WTD)</strong> untuk mengontrol tinggi air dari permukaan gambut, <strong>Defisit Hujan (Hari Tanpa Hujan)</strong> untuk mensimulasikan kekeringan musim kemarau/El Niño, <strong>Kondisi Saluran Drainase</strong> (Alami vs Kanal Terbuka), serta <strong>Luas Area Terbakar</strong> dan arah angin.",
+                slide2Title: "Luaran & Indikator Output (Hasil Kalkulasi Otomatis)",
+                overviewOutputText: "Berdasarkan variabel input Anda, sistem secara otomatis mengalkulasi <strong>Kelembapan Gambut (%)</strong>, <strong>Kedalaman Bakar Bawah Tanah (cm)</strong>, <strong>Indeks Risiko Kebakaran (0-100)</strong>, <strong>Visualisasi Vektor Sebaran Asap (*Plume*)</strong> di kanvas, serta perkiraan logistik air dan panduan mitigasi kesehatan spesifik.",
+                inputCardTitle: "Tuas Kontrol Lingkungan & Kebakaran",
+                freeVarsBadge: "Variabel Bebas",
+                labelWtd: "Kedalaman Muka Air Tanah (WTD)",
+                scaleWtdMin: "-120 cm (Sangat Kering)",
+                scaleWtdMax: "0 cm (Basah/Banjir)",
+                labelDryDays: "Defisit Hujan / Tanpa Hujan",
+                scaleDryMin: "0 Hari (Hujan Harian)",
+                scaleDryMax: "90 Hari (El Niño Ekstrem)",
+                dryDaysUnit: "Hari",
+                labelDegradation: "Kondisi Lahan & Saluran Drainase",
+                optPristine: "Gambut Alami / Minim Kanal (Pristine)",
+                optModerate: "Terdegradasi Sedang (Kanal Sekunder)",
+                optDegraded: "Sangat Terdegradasi (Kanal Dalam & Terbuka)",
+                labelArea: "Luas Lahan Terbakar (Hektare)",
+                scaleSmallArea: "10 ha (Skala Kecil)",
+                scaleLargeArea: "5.000 ha (Bencana Luas)",
+                labelWindDir: "Arah Angin Utama",
+                optWindWest: "Ke Barat",
+                optWindSW: "Ke Barat Daya",
+                optWindNorth: "Ke Utara",
+                optWindEast: "Ke Timur",
+                labelWindSpeed: "Kecepatan Angin",
+                optSpeedSlow: "Pelan (10 km/jam)",
+                optSpeedModerate: "Sedang (18 km/jam)",
+                optSpeedFast: "Kencang (30 km/jam)",
+                readoutCardTitle: "Indikator Terkalkulasi Otomatis",
+                depVarsBadge: "Variabel Terikat",
+                readoutMoistureTitle: "Kelembapan Gambut",
+                readoutBurnDepthTitle: "Kedalaman Api Bawah Tanah",
+                subsurfaceLayerLabel: "Lapisan Gambut Kering",
+                readoutRiskScoreTitle: "Indeks Risiko Kebakaran Gambut",
+                scaleSafeRisk: "0 (Sangat Aman)",
+                scaleEmergencyRisk: "100 (Bencana Darurat)",
+                moistureVeryDry: "Sangat Kering (Mudah Terbakar)",
+                moistureDry: "Kering (Rentan)",
+                moistureModerate: "Lembap Cukup",
+                moistureWet: "Sangat Wet / Basah",
+                visualizerTitle: "Visualisasi Vektor Geometris Sektor Asap & Profil Gambut",
+                legendFire: "Titik Api Utama",
+                legendHaze: "High Health Risk Zone",
+                legendWtd: "Muka Air Tanah (WTD)",
+                plannerCardTitle: "Perencanaan Respon & Panduan Mitigasi Spesifik",
+                waterReqLabel: "Kebutuhan Air Pemadaman (m³)",
+                heavyEquipLabel: "Ekskavator / Sekat Kanal",
+                unitLabel: "Unit",
+                hazeRadiusLabel: "Radius Dampak Kesehatan",
+                carbonEmissionsLabel: "Estimasi Emisi Karbon",
+                slideRec1Title: "Rekomendasi Taktis Pemadaman & Penutupan Kanal",
+                slideRec1Text: "<li>Lakukan pembasahan total (rewetting) menggunakan pompa air tekanan tinggi hingga meresap ke kedalaman gambut.</li><li>Bangun sekat kanal darurat (canal blocking) untuk menaikkan kembali tinggi muka air tanah kawasan.</li><li>Gunakan ekskavator untuk isolasi parit api (firebreak trenching) guna mencegah penyebaran api bawah tanah.</li>",
+                slideRec2Title: "Mitigasi Kesehatan: Bayi & Balita (0–5 Tahun) & Rumah Tanpa Alat",
+                slideRec2Text: "<li><strong>Dilarang Memakai Masker N95</strong> pada bayi/balita di bawah 2 tahun karena risiko sesak napas/asfiksia.</li><li>EVAKUASI ke Clean Air Room (Ruang Singgah Ber-AC) dengan filter HEPA atau Posko Kesehatan terdekat.</li><li><strong>Tanpa Air Purifier?</strong> Gantung handuk/kain tebal basah di celah ventilasi/pintu untuk menyaring partikulat debu. Manfaatkan skema peminjaman tabung oksigen/oximeter darurat dari Posko Desa.</li>",
+                slideRec3Title: "Mitigasi Kesehatan: Anak-Anak & Remaja (<18 Tahun)",
+                slideRec3Text: "<li>Hentikan seluruh aktivitas olahraga dan kegiatan di luar ruangan sekolah secara total.</li><li>Peralihan ke Pembelajaran Jarak Jauh (PJJ / Sekolah Diliburkan) jika indeks AQI masuk kategori Sangat Tidak Sehat.</li><li>Gunakan masker respirator ukuran anak (kids-sized fit) KN95/N95 saat harus beraktivitas di luar rumah.</li>",
+                slideRec4Title: "Mitigasi Kesehatan: Dewasa, Lansia & Ibu Hamil",
+                slideRec4Text: "<li>Pekerja lapangan dan tim pemadam wajib menggunakan Masker Respirator N95/KN95 atau Elastomeric.</li><li>Lansia & penderita riwayat asma/ISPA diprioritaskan mendapat bantuan oksigen di Posko Oksigen Mandiri RT/RW.</li><li>Pantau saturasi oksigen (pulse oximeter) berkala dan persiapkan fasilitas rujukan cepat ke Puskesmas.</li>",
+                footerText: "PeatGuard Simulator v2.5 — Model Edukasi Transparan Risiko & Penanganan Kebakaran Gambut Indonesia"
+            },
+            en: {
+                subtitle: "Indonesian Peatland Fire Risk Simulation & Mitigation Planning",
+                bannerTitle: "Interactive Peatland Intervention & Simulation",
+                bannerDesc: "Test the impact of water table depth and rainfall deficits on automated peat moisture, estimated underground smoldering depth, and smoke haze dispersion radius.",
+                overviewHeader: "Simulator Overview & Detailed Guide",
+                slide1Title: "Control Levers / Input Variables (Initial Parameters)",
+                overviewInputText: "This simulator is driven by 4 primary levers: <strong>Water Table Depth (WTD)</strong> to control water height from the peat surface, <strong>Rainfall Deficit (Dry Days)</strong> to simulate dry seasons/El Niño, <strong>Canal Drainage Conditions</strong> (Pristine vs Open Canals), and <strong>Burned Area size</strong> with wind direction.",
+                slide2Title: "Outputs & Calculated Indicators (Automated Results)",
+                overviewOutputText: "Based on your input variables, the system automatically computes <strong>Peat Moisture Content (%)</strong>, <strong>Underground Burn Depth (cm)</strong>, <strong>Fire Risk Index (0-100)</strong>, canvas <strong>Smoke Plume Vector Visualization</strong>, as well as firefighting water logistics and specific health mitigation guides.",
+                inputCardTitle: "Environmental & Fire Control Levers",
+                freeVarsBadge: "Independent Variables",
+                labelWtd: "Water Table Depth (WTD)",
+                scaleWtdMin: "-120 cm (Very Dry)",
+                scaleWtdMax: "0 cm (Wet / Flooded)",
+                labelDryDays: "Rainfall Deficit / Dry Days",
+                scaleDryMin: "0 Days (Daily Rain)",
+                scaleDryMax: "90 Days (Extreme El Niño)",
+                dryDaysUnit: "Days",
+                labelDegradation: "Land & Canal Drainage Condition",
+                optPristine: "Pristine Peat / Minimal Canals",
+                optModerate: "Moderately Degraded (Secondary Canals)",
+                optDegraded: "Severely Degraded (Deep & Open Canals)",
+                labelArea: "Burned Area (Hectares)",
+                scaleSmallArea: "10 ha (Small Scale)",
+                scaleLargeArea: "5,000 ha (Major Disaster)",
+                labelWindDir: "Primary Wind Direction",
+                optWindWest: "To West",
+                optWindSW: "To South West",
+                optWindNorth: "To North",
+                optWindEast: "To East",
+                labelWindSpeed: "Wind Speed",
+                optSpeedSlow: "Slow (10 km/h)",
+                optSpeedModerate: "Moderate (18 km/h)",
+                optSpeedFast: "Fast (30 km/h)",
+                readoutCardTitle: "Automatically Computed Indicators",
+                depVarsBadge: "Dependent Variables",
+                readoutMoistureTitle: "Peat Moisture Content",
+                readoutBurnDepthTitle: "Underground Fire Depth",
+                subsurfaceLayerLabel: "Dry Peat Subsurface Layer",
+                readoutRiskScoreTitle: "Peat Fire Risk Index",
+                scaleSafeRisk: "0 (Very Safe)",
+                scaleEmergencyRisk: "100 (Emergency Disaster)",
+                moistureVeryDry: "Very Dry (Flammable)",
+                moistureDry: "Dry (Vulnerable)",
+                moistureModerate: "Adequately Moist",
+                moistureWet: "Very Wet / Flooded",
+                visualizerTitle: "Geometric Vector Smoke Plume & Peat Profile",
+                legendFire: "Main Fire Hotspot",
+                legendHaze: "High Health Risk Zone",
+                legendWtd: "Water Table Depth (WTD)",
+                plannerCardTitle: "Response Planner & Specific Mitigation Guide",
+                waterReqLabel: "Firefighting Water Req. (m³)",
+                heavyEquipLabel: "Excavator / Canal Block",
+                unitLabel: "Units",
+                hazeRadiusLabel: "Health Impact Radius",
+                carbonEmissionsLabel: "Estimated Carbon Emissions",
+                slideRec1Title: "Tactical Suppression & Canal Blocking Recommendations",
+                slideRec1Text: "<li>Perform total rewetting using high-pressure pumps until moisture penetrates deep peat layers.</li><li>Build emergency canal blocking to restore regional water table levels.</li><li>Use excavators for firebreak trenching to prevent underground lateral fire spread.</li>",
+                slideRec2Title: "Health Mitigation: Infants & Toddlers (0–5 Yrs) & No-Equipment Homes",
+                slideRec2Text: "<li><strong>N95 Masks Prohibited</strong> for infants/toddlers under 2 years due to suffocation/asphyxia risks.</li><li>EVACUATE to a Clean Air Room with HEPA filtration or nearest Health Post.</li><li><strong>No Air Purifier?</strong> Hang wet heavy towels over window/door cracks to trap particulate matter. Utilize village emergency oxygen/oximeter lending schemes.</li>",
+                slideRec3Title: "Health Mitigation: Children & Teens (<18 Years)",
+                slideRec3Text: "<li>Halt all school outdoor sports and physical activities completely.</li><li>Switch to Remote Learning (School Closures) if AQI enters Unhealthy/Hazardous categories.</li><li>Use kids-sized KN95/N95 respirator masks when outdoor movement is unavoidable.</li>",
+                slideRec4Title: "Health Mitigation: Adults, Elderly & Pregnant Women",
+                slideRec4Text: "<li>Field workers and firefighters must use N95/KN95 or Elastomeric respirator masks.</li><li>Elderly and asthma/respiratory patients prioritized for oxygen support at community O2 stations.</li><li>Monitor pulse oximeter readings regularly and prepare rapid referral routes to clinics.</li>",
+                footerText: "PeatGuard Simulator v2.5 — Transparent Educational Model for Indonesian Peat Fire Risk & Management"
+            }
+        };
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'id' ? 'en' : 'id';
+            document.getElementById('langLabel').innerText = currentLang === 'id' ? 'EN / ID' : 'ID / EN';
+            
+            // Update static elements with data-i18n attribute
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[currentLang][key]) {
+                    el.innerHTML = dict[currentLang][key];
+                }
+            });
+
+            // Update explicit Select dropdown option elements
+            document.getElementById('optPristine').innerText = dict[currentLang]['optPristine'];
+            document.getElementById('optModerate').innerText = dict[currentLang]['optModerate'];
+            document.getElementById('optDegraded').innerText = dict[currentLang]['optDegraded'];
+
+            document.getElementById('optWindWest').innerText = dict[currentLang]['optWindWest'];
+            document.getElementById('optWindSW').innerText = dict[currentLang]['optWindSW'];
+            document.getElementById('optWindNorth').innerText = dict[currentLang]['optWindNorth'];
+            document.getElementById('optWindEast').innerText = dict[currentLang]['optWindEast'];
+
+            document.getElementById('optSpeedSlow').innerText = dict[currentLang]['optSpeedSlow'];
+            document.getElementById('optSpeedModerate').innerText = dict[currentLang]['optSpeedModerate'];
+            document.getElementById('optSpeedFast').innerText = dict[currentLang]['optSpeedFast'];
+            
+            // Update unit label
+            document.getElementById('unitText').innerText = dict[currentLang]['unitLabel'];
+
+            // Update Overview Slide text dynamically
+            document.getElementById('overviewInputText').innerHTML = dict[currentLang]['overviewInputText'];
+            document.getElementById('overviewOutputText').innerHTML = dict[currentLang]['overviewOutputText'];
+
+            // Update dynamic recommendation lists
+            document.getElementById('slideRec1TrackList').innerHTML = dict[currentLang]['slideRec1Text'];
+            document.getElementById('slideRec2TrackList').innerHTML = dict[currentLang]['slideRec2Text'];
+            document.getElementById('slideRec3TrackList').innerHTML = dict[currentLang]['slideRec3Text'];
+            document.getElementById('slideRec4TrackList').innerHTML = dict[currentLang]['slideRec4Text'];
+
+            updateSimulation();
+        }
+
+        // Carousel Sliders Logic
+        let currentOverviewSlide = 0;
+        const totalOverviewSlides = 2;
+        function renderOverviewSlide() {
+            for (let i = 0; i < totalOverviewSlides; i++) {
+                const el = document.getElementById(`overviewSlide${i}`);
+                if (el) el.style.display = (i === currentOverviewSlide) ? 'block' : 'none';
+            }
+            document.getElementById('overviewSlideIndicator').innerText = `${currentOverviewSlide + 1} / ${totalOverviewSlides}`;
+        }
+        function nextOverviewSlide() {
+            currentOverviewSlide = (currentOverviewSlide + 1) % totalOverviewSlides;
+            renderOverviewSlide();
+        }
+        function prevOverviewSlide() {
+            currentOverviewSlide = (currentOverviewSlide - 1 + totalOverviewSlides) % totalOverviewSlides;
+            renderOverviewSlide();
+        }
+
+        let currentRecomSlide = 0;
+        const totalRecomSlides = 4;
+        function renderRecomSlide() {
+            for (let i = 0; i < totalRecomSlides; i++) {
+                const el = document.getElementById(`recomSlide${i}`);
+                if (el) el.style.display = (i === currentRecomSlide) ? 'block' : 'none';
+            }
+            document.getElementById('recomSlideIndicator').innerText = `${currentRecomSlide + 1} / ${totalRecomSlides}`;
+        }
+        function nextRecomSlide() {
+            currentRecomSlide = (currentRecomSlide + 1) % totalRecomSlides;
+            renderRecomSlide();
+        }
+        function prevRecomSlide() {
+            currentRecomSlide = (currentRecomSlide - 1 + totalRecomSlides) % totalRecomSlides;
+            renderRecomSlide();
+        }
+
+        // Simulation Calculation Engine
+        function updateSimulation() {
+            const wtd = parseInt(document.getElementById('wtdInput').value);
+            const dryDays = parseInt(document.getElementById('dryDaysInput').value);
+            const degradation = document.getElementById('degradationSelect').value;
+            const area = parseInt(document.getElementById('areaInput').value);
+            const windSpeed = parseInt(document.getElementById('windSpeedSelect').value);
+            const windDir = document.getElementById('windDirSelect').value;
+
+            // UI Label Displays
+            document.getElementById('wtdValDisplay').innerText = wtd + ' cm';
+            document.getElementById('dryDaysValDisplay').innerHTML = dryDays + ` <span id="dryDaysUnitLabel">${dict[currentLang]['dryDaysUnit']}</span>`;
+            document.getElementById('areaValDisplay').innerText = area + ' ha';
+
+            // Ecohydrological Peat Moisture Calculation Formula
+            let baseMoisture = 85 + (wtd * 0.25) - (dryDays * 0.4);
+            if (degradation === 'moderate') baseMoisture -= 10;
+            if (degradation === 'degraded') baseMoisture -= 22;
+            let moisture = Math.max(15, Math.min(95, baseMoisture));
+
+            // Moisture Status Label Translation
+            const moistureStatusEl = document.getElementById('moistureStatusText');
+            if (moisture < 35) {
+                moistureStatusEl.innerText = dict[currentLang]['moistureVeryDry'];
+            } else if (moisture < 50) {
+                moistureStatusEl.innerText = dict[currentLang]['moistureDry'];
+            } else if (moisture < 70) {
+                moistureStatusEl.innerText = dict[currentLang]['moistureModerate'];
+            } else {
+                moistureStatusEl.innerText = dict[currentLang]['moistureWet'];
+            }
+
+            // Subsurface Smoldering Burn Depth Calculation (cm)
+            let burnDepth = Math.max(5, Math.abs(wtd) * 0.4 + (dryDays * 0.25) - (moisture * 0.15));
+            if (degradation === 'degraded') burnDepth *= 1.35;
+
+            // Risk Index Score Calculation (0 - 100)
+            let riskScore = Math.min(100, Math.max(5, (Math.abs(Math.min(0, wtd)) * 0.5) + (dryDays * 0.6) + (area * 0.003)));
+            if (degradation === 'degraded') riskScore = Math.min(100, riskScore * 1.25);
+
+            // Operational Requirements
+            let waterReq = Math.round(area * burnDepth * 18);
+            let excavators = Math.max(2, Math.round(area / 300));
+            let hazeRadius = Math.round((area / 50) + (windSpeed * 0.8));
+            let carbonEmissions = Math.round(area * burnDepth * 1.1);
+
+            // Update UI Readouts
+            document.getElementById('moistureDisplay').innerText = moisture.toFixed(1) + '%';
+            document.getElementById('burnDepthDisplay').innerText = Math.round(burnDepth) + ' cm';
+            document.getElementById('waterReqDisplay').innerText = waterReq.toLocaleString() + ' m³';
+            document.getElementById('excavatorDisplay').innerHTML = excavators + ` <span id="unitText">${dict[currentLang]['unitLabel']}</span>`;
+            document.getElementById('hazeRadiusDisplay').innerText = hazeRadius + ' km';
+            document.getElementById('emissionsDisplay').innerText = carbonEmissions.toLocaleString() + ' tCO₂e';
+
+            // Risk Badge Styling
+            const riskBadge = document.getElementById('riskBadge');
+            const riskBar = document.getElementById('riskBar');
+            riskBar.style.width = riskScore + '%';
+
+            if (riskScore < 35) {
+                riskBadge.innerText = currentLang === 'id' ? 'RENDAH' : 'LOW';
+                riskBadge.className = "text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300";
+            } else if (riskScore < 70) {
+                riskBadge.innerText = currentLang === 'id' ? 'SEDANG' : 'MODERATE';
+                riskBadge.className = "text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300";
+            } else {
+                riskBadge.innerText = currentLang === 'id' ? 'TINGGI / DARURAT' : 'HIGH / EMERGENCY';
+                riskBadge.className = "text-xs font-bold px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-300";
+            }
+        }
+
+        // Live Animated Canvas Vector Visualizer Loop
+        let particleOffset = 0;
+        function animateCanvas() {
+            const canvas = document.getElementById('simulationCanvas');
+            if (canvas) {
+                if (canvas.width !== canvas.parentElement.clientWidth || canvas.height !== canvas.parentElement.clientHeight) {
+                    canvas.width = canvas.parentElement.clientWidth;
+                    canvas.height = canvas.parentElement.clientHeight;
+                }
+                const ctx = canvas.getContext('2d');
+                const wtd = parseInt(document.getElementById('wtdInput').value);
+                const windSpeed = parseInt(document.getElementById('windSpeedSelect').value);
+                const windDir = document.getElementById('windDirSelect').value;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Sky Background
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Peat Soil Stratigraphy Profile
+                const horizonY = canvas.height * 0.55;
+                ctx.fillStyle = '#3f2e26';
+                ctx.fillRect(0, horizonY, canvas.width, canvas.height - horizonY);
+
+                // Water Table Line (WTD)
+                const wtdOffset = horizonY + (wtd * 0.8);
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(0, wtdOffset);
+                ctx.lineTo(canvas.width, wtdOffset);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.fillStyle = '#38bdf8';
+                ctx.font = '11px Inter, monospace';
+                ctx.fillText(`WTD: ${wtd} cm`, 15, wtdOffset - 6);
+
+                // Subsurface Hotspot
+                const fireCenterX = canvas.width * 0.45;
+                const fireWidth = 120;
+                ctx.fillStyle = '#dc2626';
+                ctx.fillRect(fireCenterX - fireWidth/2, horizonY + 5, fireWidth, 35);
+
+                // Pulsing Fire Glow
+                const pulse = Math.sin(Date.now() / 200) * 8;
+                const gradient = ctx.createRadialGradient(fireCenterX, horizonY + 10, 5, fireCenterX, horizonY + 10, 55 + pulse);
+                gradient.addColorStop(0, 'rgba(220, 38, 38, 0.9)');
+                gradient.addColorStop(1, 'rgba(220, 38, 38, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(fireCenterX, horizonY + 10, 55 + pulse, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Smoke Haze Plume Cone
+                let plumeAngle = Math.PI * 0.75;
+                if (windDir === 'BARAT') plumeAngle = Math.PI;
+                else if (windDir === 'UTARA') plumeAngle = Math.PI * 1.5;
+                else if (windDir === 'TIMUR') plumeAngle = 0;
+
+                const plumeGradient = ctx.createRadialGradient(fireCenterX, horizonY, 10, fireCenterX + Math.cos(plumeAngle)*180, horizonY + Math.sin(plumeAngle)*120, 220);
+                plumeGradient.addColorStop(0, 'rgba(239, 68, 68, 0.4)');
+                plumeGradient.addColorStop(1, 'rgba(100, 116, 139, 0.05)');
+
+                ctx.fillStyle = plumeGradient;
+                ctx.beginPath();
+                ctx.moveTo(fireCenterX, horizonY);
+                ctx.lineTo(fireCenterX + 320 * Math.cos(plumeAngle - 0.35), horizonY + 160 * Math.sin(plumeAngle - 0.35));
+                ctx.lineTo(fireCenterX + 380 * Math.cos(plumeAngle + 0.35), horizonY + 190 * Math.sin(plumeAngle + 0.35));
+                ctx.closePath();
+                ctx.fill();
+
+                // Animated Wind Particles Flow
+                particleOffset = (particleOffset + (windSpeed * 0.15)) % 60;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                for (let i = 0; i < 6; i++) {
+                    let px = fireCenterX + ((i * 45 + particleOffset) * Math.cos(plumeAngle));
+                    let py = horizonY + ((i * 25 + particleOffset * 0.5) * Math.sin(plumeAngle));
+                    ctx.beginPath();
+                    ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Surface vegetation line
+                ctx.strokeStyle = '#22c55e';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(0, horizonY);
+                ctx.lineTo(canvas.width, horizonY);
+                ctx.stroke();
+            }
+            requestAnimationFrame(animateCanvas);
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            updateSimulation();
+            requestAnimationFrame(animateCanvas);
+        };
+    </script>
+</body>
+</html>
